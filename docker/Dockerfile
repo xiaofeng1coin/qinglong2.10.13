@@ -33,7 +33,7 @@ RUN set -x \
                              make \
                              sqlite \
                              sqlite-dev \
-    && wget https://github.com/mapbox/node-sqlite3/archive/v5.0.2.zip -O /ql/sqlite3.zip \
+    && wget https://github.com/TryGhost/node-sqlite3/archive/v5.0.2.zip -O /ql/sqlite3.zip \
     && mkdir -p /ql/sqlite3 \
     && mkdir -p /ql/node_modules/sqlite3 \
     && unzip /ql/sqlite3.zip -d /ql/sqlite3 \
