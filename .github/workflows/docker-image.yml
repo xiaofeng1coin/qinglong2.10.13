@@ -1,5 +1,6 @@
 name: Docker Image CI
 on:
+  workflow_dispatch:
   push:
     branches:
       - master
@@ -24,7 +25,7 @@ jobs:
     - name: Build and push Docker image
       uses: docker/build-push-action@v4
       with:
-        context: .
+        context: docker
         platforms: linux/amd64,linux/arm,linux/arm64
         push: true
         tags: bofbef/qinglong:2.10.13
