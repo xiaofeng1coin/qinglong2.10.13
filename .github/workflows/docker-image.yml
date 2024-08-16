@@ -1,31 +1,61 @@
-name: Docker Image CI
-on:
-  workflow_dispatch
-  push:
-    branches:
-      - master
-
-jobs:
-  build-and-push:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Check out repository
-      uses: actions/checkout@master
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
-    - name: Log in to Docker Hub
-      uses: docker/login-action@v2
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_PASSWORD }}
-
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v4
-      with:
-        context: .
-        platforms: linux/amd64,linux/arm,linux/arm64
-        push: true
-        tags: bofbef/qinglong:2.10.13
+name: Build And Push Docker Image  
+  
+on:  
+  push:  
+    branches:  
+      - 'master'  
+      - 'develop'  
+    tags:  
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10  
+  schedule:  
+    - cron: '00 14 * * *' # GMT 14:00 => 北京时间 22:00  
+  workflow_dispatch:  
+  
+jobs:  
+  build-and-push:  
+    runs-on: ubuntu-latest  
+  
+    permissions:  
+      packages: write  
+      contents: read  
+  
+    steps:  
+      - uses: actions/checkout@v2  
+  
+      - name: Set up QEMU  
+        uses: docker/setup-qemu-action@v1  
+  
+      - name: Set up Docker Buildx  
+        uses: docker/setup-buildx-action@v1  
+  
+      - name: Login to DockerHub  
+        uses: docker/login-action@v1  
+        with:  
+          username: ${{ secrets.DOCKER_USERNAME }}  
+          password: ${{ secrets.DOCKER_PASSWORD }}  
+  
+      - name: Extract metadata (tags, labels) for Docker  
+        id: meta  
+        uses: docker/metadata-action@v3  
+        with:  
+          images: |  
+            ${{ github.repository }}  
+          tags: |  
+            type=ref,event=branch  
+            type=ref,event=tag  
+            type=semver,pattern={{version}}  
+            type=semver,pattern={{major}}.{{minor}}  
+            type=semver,pattern={{major}}  
+  
+      - name: Build and push  
+        id: docker_build  
+        uses: docker/build-push-action@v2  
+        with:  
+          build-args: |  
+            MAINTAINER=${{ github.repository_owner }}  
+            QL_BRANCH=${{ github.ref_name }}  
+          context: docker/ # 假设 Dockerfile 在 docker/ 目录下  
+          platforms: linux/amd64,linux/arm/v6,linux/arm/v7,linux/arm64,linux/s390x  
+          push: true  
+          tags: ${{ steps.meta.outputs.tags }}  
+          labels: ${{ steps.meta.outputs.labels }}
